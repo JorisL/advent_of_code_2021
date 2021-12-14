@@ -1,0 +1,686 @@
+* 1
+We'll sum up each column individually, and if the sum for a column is larger than 500 (1000 lines total)
+there are more ones in that column than zeroes.
+
+First use sed to put a space seperator in between each character in order to seperate each bit in a seperate column,
+and use numsum (from num-utils) to sum each column.
+
+#+name: sum_columns
+#+begin_src shell
+  cat input.txt | sed 's/./& /g' | /opt/homebrew/bin/numsum -c
+#+end_src
+
+#+RESULTS: sum_columns
+: 511 497 496 506 504 519 487 488 499 520 503 499
+
+Use AWK to check each column against 500 and set it to 0 or 1 if it is less or more, and print it as an emacs-calc binary literal
+#+name: most_occuring
+#+begin_src shell :var sum_columns=sum_columns()
+  echo $sum_columns | awk 'BEGIN {OFS=""} { for (i=1; i<=NF; i++) $i = ($i>500) ? 1 : 0; print "2#"$0 }'
+#+end_src
+
+#+RESULTS: most_occuring
+: 2#100111000110
+
+For Gamma rate: use SED to replace each 0 to 1 and 1 to 0 (by using ~ as a temporary character)
+#+name: least_occuring
+#+begin_src shell :var most_occuring=most_occuring()
+  echo $most_occuring | sed 's/0/~/g; s/1/0/g; s/~/1/g'
+#+end_src
+
+#+RESULTS: least_occuring
+: 2#011000111001
+
+Load the binary literals into emacs calc and calculate their product, which is printed in decimal.
+#+BEGIN_SRC calc :var gamma=most_occuring() epsilon=least_occuring()
+gamma * epsilon
+#+END_SRC
+
+#+RESULTS:
+: 3985686
+
+* 2
+
+** Find oxygen generator value
+First create a working file (with similar structure as used in 1)
+#+begin_src shell
+  cat input.txt | sed 's/./& /g' > oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+*** Column 1
+Get the most used value in column 1
+#+name: oxygen_most_used_col1
+#+begin_src shell :var column=1
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col1
+: 1
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=1 filter=oxygen_most_used_col1()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 511 oxygen.txt
+
+*** Column 2
+Get the most used value in column 2
+#+name: oxygen_most_used_col2
+#+begin_src shell :var column=2
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col2
+: 0
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=2 filter=oxygen_most_used_col2()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 268 oxygen.txt
+
+*** Column 3
+Get the most used value in column 2
+#+name: oxygen_most_used_col3
+#+begin_src shell :var column=3
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col3
+: 1
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=3 filter=oxygen_most_used_col3()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 142 oxygen.txt
+
+*** Column 4
+Get the most used value in column 4
+#+name: oxygen_most_used_col4
+#+begin_src shell :var column=4
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col4
+: 0
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=4 filter=oxygen_most_used_col4()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 73 oxygen.txt
+
+*** Column 5
+Get the most used value in column 5
+#+name: oxygen_most_used_col5
+#+begin_src shell :var column=5
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col5
+: 1
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=5 filter=oxygen_most_used_col5()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 38 oxygen.txt
+
+*** Column 6
+Get the most used value in column 6
+#+name: oxygen_most_used_col6
+#+begin_src shell :var column=6
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col6
+: 1
+
+Create a new file with only the most used from column 6
+#+begin_src shell :var column=6 filter=oxygen_most_used_col6()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 20 oxygen.txt
+
+*** Column 7
+Get the most used value in column 7
+#+name: oxygen_most_used_col7
+#+begin_src shell :var column=7
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col7
+: 0
+
+Create a new file with only the most used from column 7
+#+begin_src shell :var column=7 filter=oxygen_most_used_col7()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 14 oxygen.txt
+
+*** Column 8
+Get the most used value in column 8
+#+name: oxygen_most_used_col8
+#+begin_src shell :var column=8
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col8
+: 1
+
+Create a new file with only the most used from column 8
+#+begin_src shell :var column=8 filter=oxygen_most_used_col8()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 7 oxygen.txt
+
+*** Column 9
+Get the most used value in column 9
+#+name: oxygen_most_used_col9
+#+begin_src shell :var column=9
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col9
+: 1
+
+Create a new file with only the most used from column 9
+#+begin_src shell :var column=9 filter=oxygen_most_used_col9()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 5 oxygen.txt
+
+*** Column 10
+Get the most used value in column 10
+#+name: oxygen_most_used_col10
+#+begin_src shell :var column=10
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col10
+: 1
+
+Create a new file with only the most used from column 10
+#+begin_src shell :var column=10 filter=oxygen_most_used_col10()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 3 oxygen.txt
+
+*** Column 11
+Get the most used value in column 11
+#+name: oxygen_most_used_col11
+#+begin_src shell :var column=11
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col11
+: 0
+
+Create a new file with only the most used from column 11
+#+begin_src shell :var column=11 filter=oxygen_most_used_col11()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 2 oxygen.txt
+
+*** Column 12
+Get the most used value in column 12
+#+name: oxygen_most_used_col12
+#+begin_src shell :var column=12
+  cat oxygen.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: oxygen_most_used_col12
+: 1
+
+Create a new file with only the most used from column 12
+#+begin_src shell :var column=12 filter=oxygen_most_used_col12()
+  cat oxygen.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge oxygen.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l oxygen.txt
+#+end_src
+
+#+RESULTS:
+: 1 oxygen.txt
+
+
+** Find co2 generator value
+First create a working file (with similar structure as used in 1)
+#+begin_src shell
+  cat input.txt | sed 's/./& /g' > co2.txt
+#+end_src
+
+#+RESULTS:
+
+*** Column 1
+Get the most used value in column 1
+#+name: co2_most_used_col1
+#+begin_src shell :var column=1
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col1
+: 0
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=1 filter=co2_most_used_col1()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 489 co2.txt
+
+*** Column 2
+Get the most used value in column 2
+#+name: co2_most_used_col2
+#+begin_src shell :var column=2
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col2
+: 0
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=2 filter=co2_most_used_col2()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 235 co2.txt
+
+*** Column 3
+Get the most used value in column 2
+#+name: co2_most_used_col3
+#+begin_src shell :var column=3
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col3
+: 1
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=3 filter=co2_most_used_col3()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 117 co2.txt
+
+*** Column 4
+Get the most used value in column 4
+#+name: co2_most_used_col4
+#+begin_src shell :var column=4
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col4
+: 1
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=4 filter=co2_most_used_col4()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 57 co2.txt
+
+*** Column 5
+Get the most used value in column 5
+#+name: co2_most_used_col5
+#+begin_src shell :var column=5
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col5
+: 1
+
+Create a new file with only the most used from column 1
+#+begin_src shell :var column=5 filter=co2_most_used_col5()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 24 co2.txt
+
+*** Column 6
+Get the most used value in column 6
+#+name: co2_most_used_col6
+#+begin_src shell :var column=6
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col6
+: 0
+
+Create a new file with only the most used from column 6
+#+begin_src shell :var column=6 filter=co2_most_used_col6()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 11 co2.txt
+
+*** Column 7
+Get the most used value in column 7
+#+name: co2_most_used_col7
+#+begin_src shell :var column=7
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col7
+: 0
+
+Create a new file with only the most used from column 7
+#+begin_src shell :var column=7 filter=co2_most_used_col7()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 5 co2.txt
+
+*** Column 8
+Get the most used value in column 8
+#+name: co2_most_used_col8
+#+begin_src shell :var column=8
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col8
+: 1
+
+Create a new file with only the most used from column 8
+#+begin_src shell :var column=8 filter=co2_most_used_col8()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 2 co2.txt
+
+*** Column 9
+Get the most used value in column 9
+#+name: co2_most_used_col9
+#+begin_src shell :var column=9
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col9
+: 0
+
+Create a new file with only the most used from column 9
+#+begin_src shell :var column=9 filter=co2_most_used_col9()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 1 co2.txt
+
+*** Column 10
+Get the most used value in column 10
+#+name: co2_most_used_col10
+#+begin_src shell :var column=10
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col10
+: 1
+
+Create a new file with only the most used from column 10
+#+begin_src shell :var column=10 filter=co2_most_used_col10()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 1 co2.txt
+
+*** Column 11
+Get the most used value in column 11
+#+name: co2_most_used_col11
+#+begin_src shell :var column=11
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col11
+: 1
+
+Create a new file with only the most used from column 11
+#+begin_src shell :var column=11 filter=co2_most_used_col11()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 1 co2.txt
+
+*** Column 12
+Get the most used value in column 12
+#+name: co2_most_used_col12
+#+begin_src shell :var column=12
+  cat co2.txt | awk -v column=$column '{print $column}' | sort | uniq -c | sort -n | awk 'NR==1{print $2}'
+#+end_src
+
+#+RESULTS: co2_most_used_col12
+: 1
+
+Create a new file with only the most used from column 12
+#+begin_src shell :var column=12 filter=co2_most_used_col12()
+  cat co2.txt | awk -v column=$column -v filter=$filter '$column == filter {print}' | /opt/homebrew/bin/sponge co2.txt
+#+end_src
+
+#+RESULTS:
+
+check the number of lines to see if we only have a single one left
+#+begin_src shell
+  wc -l co2.txt
+#+end_src
+
+#+RESULTS:
+: 1 co2.txt
+
+
+** Calculate product
+Use similar tricks as used for assignment 3.1 to convert the column lines back to emacs-calc binary literals and calculate the product
+
+#+name: oxygen_binary
+#+begin_src shell
+  cat oxygen.txt | sed 's/ //g; s/^/2#/g'
+#+end_src
+
+#+RESULTS: oxygen_binary
+: 2#101011011101
+
+#+name: co2_binary
+#+begin_src shell
+  cat co2.txt | sed 's/ //g; s/^/2#/g'
+#+end_src
+
+#+RESULTS: co2_binary
+: 2#001110010111
+
+#+begin_src calc :var oxygen=oxygen_binary() co2=co2_binary()
+  oxygen * co2
+#+end_src
+
+#+RESULTS:
+: 2555739

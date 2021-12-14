@@ -1,0 +1,218 @@
+* 4
+
+Import helper libraries to make elisp development a bit easier
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'seq)
+  (require 'dash)
+  (require 'cl-lib)
+#+end_src
+
+#+RESULTS:
+: cl-lib
+
+#+begin_src emacs-lisp
+  (defun bingo-import-drawn-numbers (file)
+    "load the txt file with drawn numbers into a list"
+    (seq-map 's-trim (s-split "," (f-read-text file) t)))
+
+  (defun bingo-import-boards (file)
+    "split the txt file with all bingo cards into a list with for each element the full text of a single card."
+    (s-split "^\n" (f-read-text file) t))
+
+
+  (defun bingo-s-to-2dlist (s)
+    "Parse the full text of a single bingo card to a 2d array"
+    (seq-map (lambda (x) (s-split " " x t))
+             (s-split "\n" s t)))
+
+
+  (defun bingo-2dlist-to-rows-cols (a)
+    "Parse a 2d array (similar to the text) for a bingo card into a list with a list element with each row and column"
+    (-concat a
+             (apply '-zip a)))
+
+
+  (defun bingo-check-line (line drawn-numbers)
+    "Check if the line (list of numbers) only contains the numbers from the list of drawn numbers"
+    (--all? (-contains? drawn-numbers it) line))
+
+
+  (defun bingo-check-lines (card drawn-numbers)
+    "check if any of the lines (rows or colums) of a card has bingo with the given list of digits"
+    (-contains? (seq-map (lambda (line)
+                           (bingo-check-line line drawn-numbers))
+                         card)
+                't))
+
+  (defun bingo-check-when-bingo (card drawn-numbers)
+    "draw numbers until the card has bingo, and return the list of numbers drawn until the card has bingo"
+    (cl-loop for i in (-inits drawn-numbers)
+             when (bingo-check-lines card i)
+             return i))
+
+
+
+  (defun get-bingo-lengths (cards drawn-numbers)
+    "Return an association list with as key the card number and as value the number of draws until a bingo"
+    (cl-loop for x in (seq-map (lambda (card) (bingo-check-when-bingo card drawn-numbers)) cards)
+             for i from 0
+             collect `(,i . ,(length x))))
+
+
+  (defun get-winning-card (cards drawn-numbers)
+    (nth (caar (seq-sort-by #'cdr #'< (get-bingo-lengths cards drawn-numbers)))
+         cards))
+
+  (defun get-loosing-card (cards drawn-numbers)
+    (nth (caar (seq-sort-by #'cdr #'> (get-bingo-lengths cards drawn-numbers)))
+         cards))
+#+end_src
+
+#+RESULTS:
+: get-loosing-card
+
+q
+#+RESULTS:
+: bingo-check-lines
+
+** Testing the different functions
+#+begin_src emacs-lisp :results value drawer
+  (bingo-import-drawn-numbers "numbers.txt")
+#+end_src
+
+#+RESULTS:
+:results:
+(17 25 31 22 79 72 58 47 62 50 30 91 11 63 66 83 33 75 44 18 56 81 32 46 93 13 41 65 14 95 19 38 8 35 52 7 12 70 84 23 4 42 90 60 6 40 97 16 27 86 5 48 54 64 29 67 26 89 99 53 34 0 57 3 92 37 59 9 21 78 51 80 73 82 76 28 88 96 45 69 98 1 2 71 68 49 36 15 55 39 87 77 74 94 61 85 10 43 20 24)
+:end:
+
+
+#+begin_src emacs-lisp :results value drawer
+  (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist (nth 0 (bingo-import-boards "boards.txt"))))
+#+end_src
+
+#+RESULTS:
+:results:
+((36 11 70 77 80) (63 3 56 75 28) (89 91 27 33 82) (53 79 52 96 32) (58 14 78 65 38) (36 63 89 53 58) (11 3 91 79 14) (70 56 27 52 78) (77 75 33 96 65) (80 28 82 32 38))
+:end:
+
+
+
+#+begin_src emacs-lisp :results value drawer
+  (bingo-check-lines (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist (nth 0 (bingo-import-boards "boards.txt"))))
+                     '("1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "36" "11" "70" "77" "80" "54" "12" "36" "12"))
+#+end_src
+
+#+RESULTS:
+:results:
+t
+:end:
+
+
+#+begin_src emacs-lisp :results value drawer
+  (bingo-check-when-bingo (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist (nth 0 (bingo-import-boards "boards.txt"))))
+                          '("1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "36" "11" "70" "77" "20" "54" "12" "36" "80" "12"))
+#+end_src
+
+#+RESULTS:
+:results:
+(1 2 3 4 5 6 7 8 9 10 36 11 70 77 20 54 12 36 80)
+:end:
+
+
+#+begin_src emacs-lisp :results value drawer
+  (let ((drawn-numbers (bingo-import-drawn-numbers "numbers.txt"))
+        (card (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist (nth 0 (bingo-import-boards "boards.txt"))))))
+    (bingo-check-when-bingo card drawn-numbers))
+#+end_src
+
+#+RESULTS:
+:results:
+(17 25 31 22 79 72 58 47 62 50 30 91 11 63 66 83 33 75 44 18 56 81 32 46 93 13 41 65 14 95 19 38 8 35 52 7 12 70 84 23 4 42 90 60 6 40 97 16 27 86 5 48 54 64 29 67 26 89 99 53 34 0 57 3)
+:end:
+
+
+Get a assoc list with, for each card, the number of draws until bingo
+#+begin_src emacs-lisp :results value drawer
+  (let ((drawn-numbers (bingo-import-drawn-numbers "numbers.txt"))
+        (cards (seq-map (lambda (board) (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist board)))
+                        (bingo-import-boards "boards.txt"))))
+
+    (cl-loop for x in (seq-map (lambda (card) (bingo-check-when-bingo card drawn-numbers)) cards)
+             for i from 0
+             collect `(,i . ,(length x))))
+#+end_src
+
+#+RESULTS:
+:results:
+((0 . 64) (1 . 76) (2 . 60) (3 . 52) (4 . 63) (5 . 61) (6 . 63) (7 . 73) (8 . 45) (9 . 78) (10 . 68) (11 . 65) (12 . 52) (13 . 55) (14 . 56) (15 . 79) (16 . 48) (17 . 54) (18 . 47) (19 . 65) (20 . 34) (21 . 67) (22 . 46) (23 . 80) (24 . 76) (25 . 65) (26 . 61) (27 . 49) (28 . 64) (29 . 47) (30 . 46) (31 . 50) (32 . 66) (33 . 62) (34 . 66) (35 . 69) (36 . 40) (37 . 62) (38 . 43) (39 . 52) (40 . 61) (41 . 72) (42 . 34) (43 . 73) (44 . 55) (45 . 61) (46 . 73) (47 . 53) (48 . 43) (49 . 56) (50 . 47) (51 . 49) (52 . 78) (53 . 50) (54 . 74) (55 . 61) (56 . 56) (57 . 45) (58 . 55) (59 . 85) (60 . 52) (61 . 76) (62 . 36) (63 . 81) (64 . 50) (65 . 50) (66 . 59) (67 . 58) (68 . 88) (69 . 60) (70 . 68) (71 . 48) (72 . 81) (73 . 63) (74 . 34) (75 . 42) (76 . 35) (77 . 65) (78 . 40) (79 . 59) (80 . 63) (81 . 29) (82 . 54) (83 . 57) (84 . 56) (85 . 48) (86 . 55) (87 . 57) (88 . 64) (89 . 65) (90 . 72) (91 . 45) (92 . 67) (93 . 36) (94 . 81) (95 . 54) (96 . 40) (97 . 69) (98 . 52) (99 . 70))
+:end:
+
+
+
+#+begin_src emacs-lisp :results value drawer
+  (let ((drawn-numbers (bingo-import-drawn-numbers "numbers.txt"))
+        (cards (seq-map (lambda (board) (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist board)))
+                        (bingo-import-boards "boards.txt"))))
+
+    (seq-sort-by #'cdr #'< (get-bingo-lengths cards drawn-numbers)))
+#+end_src
+
+#+RESULTS:
+:results:
+((81 . 29) (20 . 34) (42 . 34) (74 . 34) (76 . 35) (62 . 36) (93 . 36) (36 . 40) (78 . 40) (96 . 40) (75 . 42) (38 . 43) (48 . 43) (8 . 45) (57 . 45) (91 . 45) (22 . 46) (30 . 46) (18 . 47) (29 . 47) (50 . 47) (16 . 48) (71 . 48) (85 . 48) (27 . 49) (51 . 49) (31 . 50) (53 . 50) (64 . 50) (65 . 50) (3 . 52) (12 . 52) (39 . 52) (60 . 52) (98 . 52) (47 . 53) (17 . 54) (82 . 54) (95 . 54) (13 . 55) (44 . 55) (58 . 55) (86 . 55) (14 . 56) (49 . 56) (56 . 56) (84 . 56) (83 . 57) (87 . 57) (67 . 58) (66 . 59) (79 . 59) (2 . 60) (69 . 60) (5 . 61) (26 . 61) (40 . 61) (45 . 61) (55 . 61) (33 . 62) (37 . 62) (4 . 63) (6 . 63) (73 . 63) (80 . 63) (0 . 64) (28 . 64) (88 . 64) (11 . 65) (19 . 65) (25 . 65) (77 . 65) (89 . 65) (32 . 66) (34 . 66) (21 . 67) (92 . 67) (10 . 68) (70 . 68) (35 . 69) (97 . 69) (99 . 70) (41 . 72) (90 . 72) (7 . 73) (43 . 73) (46 . 73) (54 . 74) (1 . 76) (24 . 76) (61 . 76) (9 . 78) (52 . 78) (15 . 79) (23 . 80) (63 . 81) (72 . 81) (94 . 81) (59 . 85) (68 . 88))
+:end:
+
+
+#+begin_src emacs-lisp :results value drawer
+  (let ((drawn-numbers (bingo-import-drawn-numbers "numbers.txt"))
+        (cards (seq-map (lambda (board) (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist board)))
+                        (bingo-import-boards "boards.txt"))))
+
+    (caar (seq-sort-by #'cdr #'< (get-bingo-lengths cards drawn-numbers))))
+#+end_src
+
+#+RESULTS:
+:results:
+81
+:end:
+
+
+** Calculating the answer
+
+Get winning card score
+#+begin_src emacs-lisp :results value drawer
+  (let ((drawn-numbers (bingo-import-drawn-numbers "numbers.txt"))
+        (cards (seq-map (lambda (board) (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist board)))
+                        (bingo-import-boards "boards.txt"))))
+
+    (let* ((winning-card (get-winning-card cards drawn-numbers))
+           (drawn-numbers-until-win (bingo-check-when-bingo winning-card drawn-numbers)))
+      (* (-sum (seq-map #'string-to-number (-distinct (-difference (-flatten winning-card) drawn-numbers-until-win))))
+         (string-to-number (car (reverse drawn-numbers-until-win))))))
+#+end_src
+
+#+RESULTS:
+:results:
+8442
+:end:
+
+
+
+Get loosing card score
+#+begin_src emacs-lisp :results value drawer
+  (let ((drawn-numbers (bingo-import-drawn-numbers "numbers.txt"))
+        (cards (seq-map (lambda (board) (bingo-2dlist-to-rows-cols (bingo-s-to-2dlist board)))
+                        (bingo-import-boards "boards.txt"))))
+
+    (let* ((loosing-card (get-loosing-card cards drawn-numbers))
+           (drawn-numbers-until-win (bingo-check-when-bingo loosing-card drawn-numbers)))
+      (* (-sum (seq-map #'string-to-number (-distinct (-difference (-flatten loosing-card) drawn-numbers-until-win))))
+         (string-to-number (car (reverse drawn-numbers-until-win))))))
+#+end_src
+
+#+RESULTS:
+:results:
+4590
+:end:

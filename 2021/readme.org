@@ -1,0 +1,35 @@
+#+TITLE: Advent of code 2021
+
+* Description
+My (botched) solutions for [[https://adventofcode.com/2021][Advent of Code 2021]], which I used to start learning emacs-lisp and several shell tools (sed, awk, etc.).
+
+Daily solutions are implemented in org-mode documents and executed using org-babel.
+
+* Status
+| day | golden star? | silver star |
+|-----+--------------+-------------|
+|   1 | *            | *           |
+|   2 | *            | *           |
+|   3 | *            | *           |
+|   4 | *            | *           |
+|   5 | *            | *           |
+|   6 | *            | *           |
+|   7 | *            | *           |
+|   8 | *            | *           |
+|   9 | *            |             |
+|  10 | *            | *           |
+|  11 | *            | *           |
+|  12 |              |             |
+|  13 | *            | *           |
+|  14 | *            |             |
+|  15 |              |             |
+|  16 |              |             |
+|  17 |              |             |
+|  18 |              |             |
+|  19 |              |             |
+|  20 |              |             |
+|  21 |              |             |
+|  22 |              |             |
+|  23 |              |             |
+|  24 |              |             |
+|  25 |              |             |

@@ -1,0 +1,92 @@
+#+begin_src emacs-lisp
+  (defmacro my-nth-2d (r c grid)
+    "return a reference to cell [r c] in a grid. can be used with setf"
+    `(nth ,c (nth ,r ,grid)))
+
+  (defmacro my-increase-grid-value (r c grid amount)
+    "increase cell [r c] in grid by amount"
+    `(setf (my-nth-2d ,r ,c, grid) (+ (my-nth-2d ,r ,c ,grid) ,amount)))
+
+  (defmacro my-increase-grid-values (grid amount)
+    "increase all cells in the grid by amount"
+    `(cl-loop for r below (length ,grid) do
+              (cl-loop for c below (length (nth 0 ,grid)) do
+                       (my-increase-grid-value r c ,grid ,amount))))
+
+  (defmacro my-flash (grid r c counter)
+    "set the value at [r c] to -1 and increase all the surrounding values by 1."
+    `(progn (setf ,counter (1+ ,counter)
+                  (my-nth-2d ,r ,c ,grid) -1)
+            (cl-loop for rr in (list (1- ,r) ,r (1+ ,r)) do
+                     (cl-loop for cc in (list (1- ,c) ,c (1+ ,c)) do
+                              (when (and (not (equal (my-nth-2d rr cc ,grid) -1))
+                                         (>= cc 0)
+                                         (>= rr 0)
+                                         (< rr (length ,grid))
+                                         (< cc (length (nth 0 ,grid))))
+                                (my-increase-grid-value rr cc ,grid 1))))))
+
+  (let ((grid '((6 2 2 7 6 1 8 5 3 6)
+                (2 3 6 8 1 5 8 3 8 4)
+                (5 3 8 5 4 1 4 1 1 3)
+                (4 5 5 6 7 5 7 5 2 3)
+                (6 7 4 6 4 8 6 7 2 4)
+                (4 8 8 1 3 2 3 8 8 4)
+                (4 6 4 8 2 6 3 7 4 4)
+                (4 8 7 1 3 3 2 8 7 2)
+                (4 7 2 4 1 2 8 2 2 8)
+                (4 3 1 6 5 1 2 1 6 7)))
+        (flash-counter 0))
+
+    (cl-loop repeat 100 do
+             (my-increase-grid-values grid 1)
+             (while (-any? (lambda (x) (>= x 10)) (-flatten grid))
+               (cl-loop for r below (length grid) do
+                        (cl-loop for c below (length (nth 0 grid)) do
+                                 (when (>= (my-nth-2d r c grid) 10)
+                                   (my-flash grid r c flash-counter)))))
+             (cl-loop for r below (length grid) do
+                      (cl-loop for c below (length (nth 0 grid)) do
+                               (when (equal (my-nth-2d r c grid) -1)
+                                 (setf (my-nth-2d r c grid) 0)))))
+
+    flash-counter)
+#+end_src
+
+#+RESULTS:
+: 1681
+
+
+
+#+begin_src emacs-lisp
+  (let ((grid '((6 2 2 7 6 1 8 5 3 6)
+                (2 3 6 8 1 5 8 3 8 4)
+                (5 3 8 5 4 1 4 1 1 3)
+                (4 5 5 6 7 5 7 5 2 3)
+                (6 7 4 6 4 8 6 7 2 4)
+                (4 8 8 1 3 2 3 8 8 4)
+                (4 6 4 8 2 6 3 7 4 4)
+                (4 8 7 1 3 3 2 8 7 2)
+                (4 7 2 4 1 2 8 2 2 8)
+                (4 3 1 6 5 1 2 1 6 7)))
+        (flash-counter 0)
+        (step-counter 0))
+
+    (while (not (-all? (lambda (x) (equal x 0)) (-flatten grid)))
+      (setf step-counter (1+ step-counter))
+      (my-increase-grid-values grid 1)
+      (while (-any? (lambda (x) (>= x 10)) (-flatten grid))
+        (cl-loop for r below (length grid) do
+                 (cl-loop for c below (length (nth 0 grid)) do
+                          (when (>= (my-nth-2d r c grid) 10)
+                            (my-flash grid r c flash-counter)))))
+      (cl-loop for r below (length grid) do
+               (cl-loop for c below (length (nth 0 grid)) do
+                        (when (equal (my-nth-2d r c grid) -1)
+                          (setf (my-nth-2d r c grid) 0)))))
+
+    step-counter)
+#+end_src
+
+#+RESULTS:
+: 276

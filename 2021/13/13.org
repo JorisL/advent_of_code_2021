@@ -1,0 +1,77 @@
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'seq)
+  (require 'dash)
+  (require 'cl-lib)
+#+end_src
+
+#+RESULTS:
+: cl-lib
+
+
+#+begin_src emacs-lisp
+  (defun my-fold (coords fold-pos direction)
+    (-distinct (-map (lambda (c)
+                       (if (equal direction 'y)
+                           (cons (car c)
+                                 (if (< (cdr c) fold-pos)
+                                     (cdr c)
+                                   (- fold-pos (- (cdr c) fold-pos))))
+                         (cons (if (< (car c) fold-pos)
+                                   (car c)
+                                 (- fold-pos (- (car c) fold-pos)))
+                               (cdr c))))
+                     coords)))
+
+
+  (let ((coords (-map (lambda (x) (apply #'cons (-map #'string-to-number (s-split "," x))))
+                      (s-split "\n" (f-read-text "coords.txt") t))))
+    (length (my-fold coords 655 'x)))
+#+end_src
+
+#+RESULTS:
+: 655
+
+
+#+begin_src emacs-lisp
+  (defmacro my-nth-2d (r c grid)
+    "return a reference to cell [r c] in a grid. can be used with setf"
+    `(nth ,c (nth ,r ,grid)))
+
+
+  (defun my-make-2d-list (x y val)
+    "Create 2d list of size [x,y] filled with val."
+    (setq a (make-list x nil))
+    (dotimes (i x)
+      (setf (nth i a) (make-list y val)))
+    a)
+
+
+  (defun my-plot-cords (coords)
+    (let* ((n-columns (+ 2(car (--max-by (> (car it) (car other)) coords))))
+           (n-rows (+ 2(cdr (--max-by (> (cdr it) (cdr other)) coords))))
+           (grid (my-make-2d-list n-rows n-columns " ")))
+      (cl-loop for coord in coords
+               do (setf (my-nth-2d (1+ (cdr coord)) (1+ (car coord)) grid) "#"))
+      grid
+      ))
+
+
+  (let ((coords (-map (lambda (x) (apply #'cons (-map #'string-to-number (s-split "," x))))
+                      (s-split "\n" (f-read-text "coords.txt") t))))
+    (cl-loop for fold-pos in '(655 447 327 223 163 111 81 55 40 27 13 6)
+             for direction in '( x   y   x   y   x   y  x  y  x  y  y y)
+             do (setf coords (my-fold coords fold-pos direction)))
+    (my-plot-cords coords))
+#+end_src
+
+#+RESULTS:
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+|   |   |   | # | # |   | # | # | # |   |   | # | # | # | # |   |   | # | # |   |   | # |   |   | # |   |   | # | # |   |   | # |   |   | # |   | # | # | # |   |
+|   |   |   |   | # |   | # |   |   | # |   |   |   |   | # |   | # |   |   | # |   | # |   |   | # |   | # |   |   | # |   | # |   |   | # |   | # |   |   | # |
+|   |   |   |   | # |   | # |   |   | # |   |   |   | # |   |   | # |   |   |   |   | # |   |   | # |   | # |   |   | # |   | # |   |   | # |   | # |   |   | # |
+|   |   |   |   | # |   | # | # | # |   |   |   | # |   |   |   | # |   |   |   |   | # |   |   | # |   | # | # | # | # |   | # |   |   | # |   | # | # | # |   |
+|   | # |   |   | # |   | # |   |   |   |   | # |   |   |   |   | # |   |   | # |   | # |   |   | # |   | # |   |   | # |   | # |   |   | # |   | # |   | # |   |
+|   |   | # | # |   |   | # |   |   |   |   | # | # | # | # |   |   | # | # |   |   |   | # | # |   |   | # |   |   | # |   |   | # | # |   |   | # |   |   | # |
+

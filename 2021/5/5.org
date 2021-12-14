@@ -1,0 +1,271 @@
+Import helper libraries to make elisp development a bit easier
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'seq)
+  (require 'dash)
+  (require 'cl-lib)
+#+end_src
+
+#+RESULTS:
+: cl-lib
+
+
+* 1
+Use AWK to filter out values where X1==X2 or Y1==Y2
+#+begin_src shell
+  cat input.txt | sed 's/,/ /g; s/->//g' | awk '{if ($1==$3 || $2==$4) {print}}' > input_task1.txt
+#+end_src
+
+#+RESULTS:
+
+#+begin_src shell
+  head input_task1.txt
+#+end_src
+
+#+RESULTS:
+| 456 | 846 | 221 | 846 |
+| 682 | 930 | 562 | 930 |
+| 247 | 685 | 247 |  21 |
+| 106 | 800 | 635 | 800 |
+| 953 | 340 | 135 | 340 |
+| 293 | 223 | 293 |  12 |
+| 454 | 196 | 454 | 463 |
+| 886 | 766 | 164 | 766 |
+| 592 | 590 | 192 | 590 |
+| 436 | 982 | 436 | 545 |
+
+
+Use AWK to make a file for each of x1 y1 x2 y2
+#+begin_src shell
+  cat input_task1.txt | awk '{print $1}' > input_task1_x1.txt
+#+end_src
+
+#+RESULTS:
+
+#+begin_src shell
+  cat input_task1.txt | awk '{print $2}' > input_task1_y1.txt
+#+end_src
+
+#+RESULTS:
+
+#+begin_src shell
+  cat input_task1.txt | awk '{print $3}' > input_task1_x2.txt
+#+end_src
+
+#+RESULTS:
+
+#+begin_src shell
+  cat input_task1.txt | awk '{print $4}' > input_task1_y2.txt
+#+end_src
+
+#+RESULTS:
+
+
+#+begin_src emacs-lisp
+  (defun my-make-2d-list (x y val)
+    "Create 2d list of size [x,y] filled with val."
+    (setq a (make-list x nil))
+    (dotimes (i x)
+      (setf (nth i a) (make-list y val)))
+    a)
+
+
+  (defun my-import-numbers (file)
+    "load the coordinate numbers (one per line) into a list."
+    (seq-map #'string-to-number (s-split "\n" (f-read-text file) t)))
+
+
+  (defun my-draw-line (buffer x1 y1 x2 y2 value)
+    "Draw a straight line between points using Bresenham's line algorithm"
+    (let* ((dist-x (abs (- x1 x2)))
+           (dist-y (abs (- y1 y2)))
+           (steep (> dist-y dist-x)))
+      (when steep
+        (cl-psetf x1 y1 y1 x1
+                  x2 y2 y2 x2))
+      (when (> x1 x2)
+        (cl-psetf x1 x2 x2 x1
+                  y1 y2 y2 y1))
+      (let* ((delta-x (- x2 x1))
+             (delta-y (abs (- y2 y1)))
+             (error (floor delta-x 2))
+             (y-step (if (< y1 y2) 1 -1))
+             (y y1))
+        (cl-loop for x upfrom x1 to x2 do
+                 (progn (if steep
+                            ;; increase existing values by value
+                            (setf (nth y (nth x buffer)) (+ (nth y (nth x buffer)) value))
+                          (setf (nth x (nth y buffer)) (+ (nth x (nth y buffer)) value)))
+                        (setf error (- error delta-y))
+                        (when (< error 0)
+                          (cl-incf y y-step)
+                          (cl-incf error delta-x)))))
+      buffer))
+#+end_src
+
+#+RESULTS:
+: my-draw-line
+
+
+
+#+begin_src emacs-lisp
+  (let ((buffer (my-make-2d-list 10 10 0)))
+    (setf (nth 5 (nth 1 buffer)) 42)
+    buffer)
+#+end_src
+
+#+RESULTS:
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 | 42 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 | 0 |  0 | 0 | 0 | 0 | 0 |
+
+
+
+
+#+begin_src emacs-lisp
+  (my-import-numbers "input_task1_x1.txt")
+#+end_src
+
+#+RESULTS:
+| 456 | 682 | 247 | 106 | 953 | 293 | 454 | 886 | 592 | 436 | 741 | 727 | 341 | 942 | 203 | 554 | 902 | 187 | 956 | 847 | 935 | 978 | 708 | 204 | 703 | 14 | 646 | 397 | 540 | 848 | 198 | 686 | 867 | 134 | 824 | 437 | 494 | 920 | 59 | 328 | 782 | 247 | 487 | 327 | 117 | 530 | 677 | 529 | 423 | 521 | 423 | 381 | 286 | 347 | 760 | 746 | 839 | 577 | 393 | 364 | 788 | 94 | 292 | 438 | 70 | 184 | 586 | 202 | 534 | 367 | 24 | 485 | 556 | 254 | 224 | 552 | 413 | 397 | 138 | 909 | 180 | 823 | 285 | 735 | 934 | 48 | 458 | 118 | 176 | 567 | 555 | 522 | 591 | 434 | 245 | 768 | 488 | 675 | 618 | 802 | 144 | 547 | 78 | 409 | 140 | 682 | 748 | 84 | 909 | 203 | 335 | 578 | 830 | 78 | 920 | 309 | 270 | 906 | 627 | 692 | 183 | 632 | 94 | 261 | 631 | 141 | 357 | 889 | 548 | 675 | 205 | 141 | 49 | 798 | 737 | 758 | 917 | 34 | 85 | 262 | 613 | 300 | 764 | 555 | 241 | 600 | 960 | 785 | 226 | 411 | 289 | 738 | 225 | 840 | 242 | 943 | 819 | 532 | 281 | 815 | 18 | 479 | 704 | 961 | 745 | 556 | 742 | 206 | 445 | 781 | 357 | 771 | 662 | 689 | 680 | 64 | 566 | 528 | 205 | 313 | 532 | 800 | 188 | 540 | 31 | 823 | 879 | 677 | 220 | 216 | 540 | 152 | 280 | 913 | 40 | 467 | 619 | 114 | 951 | 172 | 244 | 68 | 529 | 813 | 893 | 673 | 725 | 317 | 222 | 810 | 928 | 974 | 657 | 498 | 66 | 57 | 879 | 98 | 483 | 222 | 744 | 588 | 591 | 907 | 981 | 316 | 906 | 579 | 444 | 766 | 787 | 583 | 671 | 274 | 673 | 73 | 861 | 739 | 209 | 286 | 495 | 400 | 861 | 552 | 947 | 214 | 516 | 214 | 549 | 364 | 441 | 459 | 277 | 409 | 534 | 534 | 456 | 871 | 911 | 840 | 531 | 599 | 455 | 38 | 841 | 105 | 801 | 491 | 563 | 410 | 671 | 456 | 858 | 723 | 480 | 677 | 249 | 52 | 911 | 46 | 960 | 916 | 834 | 543 | 685 | 552 | 723 | 155 | 59 | 218 | 491 | 676 | 361 | 220 | 965 | 285 | 853 | 859 | 55 | 893 | 214 | 400 | 624 | 329 | 458 | 99 | 273 | 490 | 619 | 266 | 745 | 311 | 735 | 936 | 792 | 141 | 257 | 302 | 301 | 510 | 13 | 218 | 475 | 458 | 912 | 152 | 136 | 11 | 348 | 343 | 117 | 92 | 259 | 630 | 134 | 139 | 598 |
+
+
+test draw a single line on a grid
+#+begin_src emacs-lisp
+  (my-draw-line (my-make-2d-list 10 10 1) 1 1 4 8 42)
+#+end_src
+
+#+RESULTS:
+| 1 |  1 |  1 |  1 |  1 | 1 | 1 | 1 | 1 | 1 |
+| 1 | 43 |  1 |  1 |  1 | 1 | 1 | 1 | 1 | 1 |
+| 1 | 43 |  1 |  1 |  1 | 1 | 1 | 1 | 1 | 1 |
+| 1 |  1 | 43 |  1 |  1 | 1 | 1 | 1 | 1 | 1 |
+| 1 |  1 | 43 |  1 |  1 | 1 | 1 | 1 | 1 | 1 |
+| 1 |  1 |  1 | 43 |  1 | 1 | 1 | 1 | 1 | 1 |
+| 1 |  1 |  1 | 43 |  1 | 1 | 1 | 1 | 1 | 1 |
+| 1 |  1 |  1 |  1 | 43 | 1 | 1 | 1 | 1 | 1 |
+| 1 |  1 |  1 |  1 | 43 | 1 | 1 | 1 | 1 | 1 |
+| 1 |  1 |  1 |  1 |  1 | 1 | 1 | 1 | 1 | 1 |
+
+test drawing multiple lines on a grid
+#+begin_src emacs-lisp
+  (let ((buffer (my-make-2d-list 10 10 0)))
+    (cl-loop for x1 in '(1 1 1 5)
+             for y1 in '(1 1 1 0)
+             for x2 in '(8 8 1 5)
+             for y2 in '(1 8 8 9)
+             do
+             (my-draw-line buffer x1 y1 x2 y2 10))
+    buffer)
+#+end_src
+
+#+RESULTS:
+| 0 |  0 |  0 |  0 |  0 | 10 |  0 |  0 |  0 | 0 |
+| 0 | 30 | 10 | 10 | 10 | 20 | 10 | 10 | 10 | 0 |
+| 0 | 10 | 10 |  0 |  0 | 10 |  0 |  0 |  0 | 0 |
+| 0 | 10 |  0 | 10 |  0 | 10 |  0 |  0 |  0 | 0 |
+| 0 | 10 |  0 |  0 | 10 | 10 |  0 |  0 |  0 | 0 |
+| 0 | 10 |  0 |  0 |  0 | 20 |  0 |  0 |  0 | 0 |
+| 0 | 10 |  0 |  0 |  0 | 10 | 10 |  0 |  0 | 0 |
+| 0 | 10 |  0 |  0 |  0 | 10 |  0 | 10 |  0 | 0 |
+| 0 | 10 |  0 |  0 |  0 | 10 |  0 |  0 | 10 | 0 |
+| 0 |  0 |  0 |  0 |  0 | 10 |  0 |  0 |  0 | 0 |
+
+
+count number of crossings in grid (e.g. number larger than 1)
+#+begin_src emacs-lisp
+  (--count (> it 1) (-flatten (let ((buffer (my-make-2d-list 10 10 0)))
+                                (cl-loop for x1 in '(1 1 1 5)
+                                         for y1 in '(1 1 1 0)
+                                         for x2 in '(8 8 1 5)
+                                         for y2 in '(1 8 8 9)
+                                         do
+                                         (my-draw-line buffer x1 y1 x2 y2 1))
+                                buffer)))
+#+end_src
+
+#+RESULTS:
+: 3
+
+
+#+begin_src emacs-lisp
+  (--count (> it 1) (-flatten (let ((buffer (my-make-2d-list 1000 1000 0))
+                                    (l-x1 (my-import-numbers "input_task1_x1.txt"))
+                                    (l-y1 (my-import-numbers "input_task1_y1.txt"))
+                                    (l-x2 (my-import-numbers "input_task1_x2.txt"))
+                                    (l-y2 (my-import-numbers "input_task1_y2.txt")))
+                                (cl-loop for x1 in l-x1
+                                         for y1 in l-y1
+                                         for x2 in l-x2
+                                         for y2 in l-y2
+                                         do
+                                         (my-draw-line buffer x1 y1 x2 y2 1))
+                                buffer)))
+
+#+end_src
+
+#+RESULTS:
+: 5280
+
+
+** 2
+Perform exactly the same trick, but now without filtering out the horizontal or vertical line values.
+
+#+begin_src shell
+  cat input.txt | sed 's/,/ /g; s/->//g' > input_task2.txt
+#+end_src
+
+#+RESULTS:
+
+
+Use AWK to make a file for each of x1 y1 x2 y2
+#+begin_src shell
+  cat input_task2.txt | awk '{print $1}' > input_task2_x1.txt
+#+end_src
+
+#+RESULTS:
+
+#+begin_src shell
+  cat input_task2.txt | awk '{print $2}' > input_task2_y1.txt
+#+end_src
+
+#+RESULTS:
+
+#+begin_src shell
+  cat input_task2.txt | awk '{print $3}' > input_task2_x2.txt
+#+end_src
+
+#+RESULTS:
+
+#+begin_src shell
+  cat input_task2.txt | awk '{print $4}' > input_task2_y2.txt
+#+end_src
+
+#+RESULTS:
+
+#+begin_src emacs-lisp
+  (--count (> it 1) (-flatten (let ((buffer (my-make-2d-list 1000 1000 0))
+                                    (l-x1 (my-import-numbers "input_task2_x1.txt"))
+                                    (l-y1 (my-import-numbers "input_task2_y1.txt"))
+                                    (l-x2 (my-import-numbers "input_task2_x2.txt"))
+                                    (l-y2 (my-import-numbers "input_task2_y2.txt")))
+                                (cl-loop for x1 in l-x1
+                                         for y1 in l-y1
+                                         for x2 in l-x2
+                                         for y2 in l-y2
+                                         do
+                                         (my-draw-line buffer x1 y1 x2 y2 1))
+                                buffer)))
+
+#+end_src
+
+#+RESULTS:
+: 16716

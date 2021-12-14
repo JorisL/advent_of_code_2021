@@ -1,0 +1,52 @@
+Import helper libraries to make elisp development a bit easier
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'seq)
+  (require 'dash)
+  (require 'cl-lib)
+#+end_src
+
+#+RESULTS:
+: cl-lib
+
+
+#+begin_src emacs-lisp
+  (defmacro my-add-or-set-asoc (key amount alist)
+    `(if (assoc ,key ,alist)
+         (setf (cdr (assoc ,key ,alist)) (+ (cdr (assoc ,key ,alist)) ,amount))
+       (push (cons ,key ,amount) ,alist)))
+
+
+  (defun my-count-lanternfish (fish days)
+    (let ((A '()))
+      ;; Initialize assoc list with as key the number of days and value the number of fish for that day
+      (cl-loop for x in fish do
+               (my-add-or-set-asoc x 1 A))
+      (cl-loop repeat days do
+               (setq A (-map (lambda (x) (cons (1- (car x)) (cdr x))) A))
+               (when (assoc -1 A)
+                 (my-add-or-set-asoc 8 (cdr (assoc -1 A)) A)
+                 (my-add-or-set-asoc 6 (cdr (assoc -1 A)) A)
+                 (assq-delete-all -1 A)))
+      (-sum (-map #'cdr A))))
+#+end_src
+
+#+RESULTS:
+: my-count-lanternfish
+
+
+#+begin_src emacs-lisp
+  (my-count-lanternfish (seq-map #'string-to-number (s-split "," (f-read-text "input.txt") t)) 80)
+#+end_src
+
+#+RESULTS:
+: 372984
+
+
+#+begin_src emacs-lisp
+  (my-count-lanternfish (seq-map #'string-to-number (s-split "," (f-read-text "input.txt") t)) 256)
+#+end_src
+
+#+RESULTS:
+: 1681503251694

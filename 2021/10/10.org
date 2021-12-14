@@ -1,0 +1,77 @@
+* 10.1
+
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'seq)
+  (require 'dash)
+  (require 'cl-lib)
+#+end_src
+
+#+RESULTS:
+: cl-lib
+
+#+begin_src emacs-lisp
+  (with-temp-buffer
+    (insert-file-contents "input.txt")
+
+    ;; remove all correctly closed pairs
+    (cl-loop for x from 0 to 100 do
+             (beginning-of-buffer)
+             (while (re-search-forward (rx (or "()" "{}" "[]" "<>")) nil t)
+               (replace-match "")))
+
+    (let ((illigal-delimiters (cl-loop if (re-search-forward (rx (minimal-match bol (zero-or-more (in "(" "{" "[" "<")) (group (in ")" "]" "}" ">")))) nil t)
+                                       collect (match-string 1) into result
+                                       else return result)))
+      (-sum (-replace ">" 25137 (-replace "}" 1197 (-replace "]" 57 (-replace ")" 3 illigal-delimiters)))))))
+#+end_src
+
+#+RESULTS:
+: 315693
+
+
+#+begin_src emacs-lisp
+  (defun calc-autocomplete-score (line-nrs)
+    (cl-loop with score = 0
+             for n in line-nrs
+             do (setf score (+ (* 5 score) n))
+             finally return score))
+
+  (with-temp-buffer
+    (insert-file-contents "input.txt")
+
+    ;; remove all correctly closed pairs
+    (cl-loop for x from 0 to 100 do
+             (beginning-of-buffer)
+             (while (re-search-forward (rx (or "()" "{}" "[]" "<>")) nil t)
+               (replace-match "")))
+
+    ;; remove all lines with closing pairs (e.g. corrupted lines)
+    (beginning-of-buffer)
+    (delete-matching-lines (rx (or ")" "}" "]" ">")))
+
+    (beginning-of-buffer)
+    (while (re-search-forward (rx "(") nil t)
+      (replace-match "1,"))
+
+    (beginning-of-buffer)
+    (while (re-search-forward (rx "[") nil t)
+      (replace-match "2,"))
+
+    (beginning-of-buffer)
+    (while (re-search-forward (rx "{") nil t)
+      (replace-match "3,"))
+
+    (beginning-of-buffer)
+    (while (re-search-forward (rx "<") nil t)
+      (replace-match "4,"))
+
+    (let ((scores (-sort #'< (-map (lambda (line) (calc-autocomplete-score (reverse (-map #'string-to-number (s-split "," line t)))))
+                                   (s-lines (s-chomp (buffer-string)))))))
+      (nth (/ (length scores) 2) scores)))
+#+end_src
+
+#+RESULTS:
+: 1870887234
+

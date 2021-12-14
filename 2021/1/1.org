@@ -1,0 +1,47 @@
+* Part 1
+This problem is solved by creating a difference-list by zipping the original list (minus first element) together with the shifted list (minus last element) and subtracting them.
+Then just count the number of items in the resulting difference list where the item > 0.
+
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'dash)
+  (require 'cl)
+
+  (flet ((diff-list (x)
+                    (-zip-with '- (cdr x) (-butlast x))))
+        (let* ((input-s (-butlast (s-split "\n" (f-read "input.txt")))) ; use butlast to remove last empty-string element
+               (input-n (-map 'string-to-number input-s)))
+
+          (--count (> it 0) (diff-list input-n) )))
+#+end_src
+
+#+RESULTS:
+: 1548
+
+
+* Part 2
+Botching a solution where 3 lists are created, shifted one sample apart, and zip-summed together.
+If using MATLAB/numpy or similar a convolution filter with a [1, 1, 1] kernel would be a much better solution,
+but I couldn't quickly find an implementation in lisp (and was not bothered to make one myself).
+
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'dash)
+  (require 'cl)
+
+  (flet ((diff-list (x)
+                    (-zip-with '- (cdr x) (-butlast x))))
+        (let* ((input-s (-butlast (s-split "\n" (f-read "input.txt"))))
+               (input-n (-map 'string-to-number input-s))
+               (input-n1 (-drop-last 2 (-drop 0 input-n)))
+               (input-n2 (-drop-last 1 (-drop 1 input-n)))
+               (input-n3 (-drop-last 0 (-drop 2 input-n)))
+               (input-running-average (-map (lambda (x) (apply '+ x)) (-zip input-n1 input-n2 input-n3))))
+
+          (--count (> it 0) (diff-list input-running-average) )))
+#+end_src
+
+#+RESULTS:
+: 1589

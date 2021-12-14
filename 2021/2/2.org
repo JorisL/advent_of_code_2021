@@ -1,0 +1,75 @@
+* 1
+First use AWK to sum the second column (number) from each line containing either forward, up, or down.
+
+#+name: sum-forward
+#+begin_src sh
+  awk '/forward/ {sum+=$2} END {print sum}' input.txt
+#+end_src
+
+#+RESULTS:
+: 1911
+
+#+name: sum-up
+#+begin_src sh
+  awk '/up/ {sum+=$2} END {print sum}' input.txt
+#+end_src
+
+#+RESULTS: sum_up
+: 1075
+
+#+name: sum-down
+#+begin_src sh
+  awk '/down/ {sum+=$2} END {print sum}' input.txt
+#+end_src
+
+#+RESULTS: sum_down
+: 1854
+
+Then use elisp to calculate forward * (down - up):
+
+#+begin_src emacs-lisp :var sum-up=sum-up() sum-down=sum-down() sum-forward=sum-forward()
+  (* sum-forward (- sum-down sum-up))
+#+end_src
+
+#+RESULTS:
+: 1488669
+
+* 2
+
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (emacs-lisp . t)
+     (python . t)
+     (calc . t)
+     (shell . t)))
+  (setq org-babel-python-command "python3")
+#+end_src
+
+#+RESULTS:
+: python3
+
+#+begin_src python :var filename="input.txt" :results output
+  import re
+
+  aim = 0
+  horiz = 0
+  depth = 0
+
+  with open(filename) as file:
+      while (line := file.readline().rstrip()):
+          val = int(re.findall(r"\d+", line)[0])
+          if line.startswith("down"):
+                aim += val
+          elif line.startswith("up"):
+                aim -= val
+          elif line.startswith("forward"):
+                horiz += val
+                depth += val * aim
+
+  print(horiz * depth)
+#+end_src
+
+#+RESULTS:
+: 1176514794

@@ -1,0 +1,69 @@
+* 7.1
+
+Import helper libraries to make elisp development a bit easier
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'seq)
+  (require 'dash)
+  (require 'cl-lib)
+#+end_src
+
+#+RESULTS:
+: cl-lib
+
+test
+#+begin_src emacs-lisp
+  (let ((crabs '(16 1 2 0 4 2 7 1 2 14)))
+    (cl-loop for i from 0 to (-max crabs)
+             collect `(,i .  ,(-sum (-map (lambda (x) (abs (- x i)))
+                                       crabs)))))
+#+end_src
+
+#+RESULTS:
+: ((0 . 49) (1 . 41) (2 . 37) (3 . 39) (4 . 41) (5 . 45) (6 . 49) (7 . 53) (8 . 59) (9 . 65) (10 . 71) (11 . 77) (12 . 83) (13 . 89) (14 . 95) (15 . 103) (16 . 111))
+
+test
+#+begin_src emacs-lisp
+  (let ((crabs '(16 1 2 0 4 2 7 1 2 14)))
+    (--min-by (> (cdr it) (cdr other))
+              (cl-loop for i from 0 to (-max crabs)
+                       collect `(,i . ,(-sum (-map (lambda (x) (abs (- x i)))
+                                                 crabs))))))
+#+end_src
+
+#+RESULTS:
+: (2 . 37)
+
+
+
+
+#+begin_src emacs-lisp
+  (let ((crabs (seq-map #'string-to-number (s-split "," (f-read-text "input.txt") t))))
+    (--min-by (> (cdr it) (cdr other))
+              (cl-loop for i from 0 to (-max crabs)
+                       collect `(,i . ,(-sum (-map (lambda (x) (abs (- x i)))
+                                                   crabs))))))
+#+end_src
+
+#+RESULTS:
+: (354 . 342730)
+
+
+* 7.2
+
+#+begin_src emacs-lisp
+  (defun my-triangular (n)
+    "compute the n'th triangular number."
+    (-sum (number-sequence 1 n)))
+
+
+  (let ((crabs (seq-map #'string-to-number (s-split "," (f-read-text "input.txt") t))))
+    (--min-by (> (cdr it) (cdr other))
+              (cl-loop for i from 0 to (-max crabs)
+                       collect `(,i . ,(-sum (-map (lambda (x) (my-triangular (abs (- x i))))
+                                                   crabs))))))
+#+end_src
+
+#+RESULTS:
+: (476 . 92335207)
