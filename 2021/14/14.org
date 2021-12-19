@@ -1,6 +1,6 @@
-* 14.1
+* DONE 14.1
 Test data:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (defun my-insert-after (l index item)
     "Change list l by inserting item after the item at the index position."
     (push item (cdr (nthcdr index l))) 
@@ -36,22 +36,23 @@ Test data:
                       until (not (nth (1+ idx) l))
                       do (let* ((current-pair (cons (nth idx l) (nth (1+ idx) l)))
                                 (rules-idx (--find-index (equal (car it) current-pair) rules)))
-                           (when (not (equal rules-idx '()))
+                           (when rules-idx
                              (my-insert-after l idx (cdr (nth rules-idx rules)))
                              (setf idx (1+ idx))
                              )
                            (setf idx (1+ idx)))))
     (let ((hist (my-histogram l)))
       (- (cdr (--max-by (> (cdr it) (cdr other)) hist))
-         (cdr (--min-by (> (cdr it) (cdr other)) hist)))))
+         (cdr (--min-by (> (cdr it) (cdr other)) hist)))
+      hist))
 #+end_src
 
 #+RESULTS:
-: 1588
+: ((N . 865) (B . 1749) (C . 298) (H . 161))
 
 
 Actual puzzle:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (defun my-insert-after (lst index newelt)
     (push newelt (cdr (nthcdr index lst))) 
     lst)
@@ -61,9 +62,6 @@ Actual puzzle:
     "create alist histogram of occurances in list as (value .amount)"
     (-map (lambda (x) (cons x (--count (equal x it) l)))
           (-distinct l)))
-
-
-
 
 
   (let ((l '(K H S S C S K K C P F K P P B B O K V F))
@@ -173,7 +171,7 @@ Actual puzzle:
                       until (not (nth (1+ idx) l))
                       do (let* ((current-pair (cons (nth idx l) (nth (1+ idx) l)))
                                 (rules-idx (--find-index (equal (car it) current-pair) rules)))
-                           (when (not (equal rules-idx '()))
+                           (when rules-idx
                              (my-insert-after l idx (cdr (nth rules-idx rules)))
                              (setf idx (1+ idx))
                              )
@@ -185,3 +183,115 @@ Actual puzzle:
 
 #+RESULTS:
 : 5656
+
+* STARTED 14.2
+
+It practically becomes too dificult to store the entire list in memory.
+Therefore we will store it as a histogram alist where each key is a cons pair of 2 consecutive symbols in the original list.
+
+#+begin_src emacs-lisp
+  (defun remove-nth-element (nth list)
+    (if (zerop nth) (cdr list)
+      (let ((last (nthcdr (1- nth) list)))
+        (setcdr last (cddr last))
+        list)))
+
+
+  (defun my-histogram (l)
+    "create alist histogram of occurances in list as (value .amount)"
+    (-map (lambda (x) (cons x (--count (equal x it) l)))
+          (-distinct l)))
+
+
+  (defun my-get-pairs (l)
+    "create a list where each element is a cons pair of 2 consecutive elements in the original list"
+    (cl-loop with idx = 0
+             until (not (nth (1+ idx) l))
+             collect (cons (nth idx l) (nth (1+ idx) l))
+             do (setf idx (1+ idx))))
+
+
+  (defun my-add-to-histogram (hist element amount)
+    "If element does not yet exist in histogram make a new key, otherwise increase value of key by one."
+    (let ((idx (--find-index (equal (car it) element)
+                             hist)))
+      (if idx
+          (cl-incf (cdr (nth idx hist)) amount)
+        (push (cons element amount) hist)))
+    hist)
+
+
+  (defun my-remove-from-histogram (hist element)
+    (let ((idx (--find-index (equal (car it) element)
+                             hist)))
+      (when idx
+        (setf hist (remove-nth-element idx hist))))
+    hist)
+
+
+
+  (let* ((l '(N N C B))
+         (rules '(((C . H) . B)
+                  ((H . H) . N)
+                  ((C . B) . H)
+                  ((N . H) . C)
+                  ((H . B) . C)
+                  ((H . C) . B)
+                  ((H . N) . C)
+                  ((N . N) . C)
+                  ((B . H) . H)
+                  ((N . C) . B)
+                  ((N . B) . B)
+                  ((B . N) . B)
+                  ((B . B) . N)
+                  ((B . C) . B)
+                  ((C . C) . N)
+                  ((C . N) . C)))
+         (hist (my-histogram (my-get-pairs l))))
+
+    (cl-loop repeat 10
+             do (cl-loop for hist-element in (cl-copy-list hist)
+                         do (let ((rules-idx (--find-index (equal (car it) (car hist-element)) rules)))
+                              (when rules-idx
+                                (setf hist (my-remove-from-histogram hist
+                                                                     (car (nth rules-idx rules))))
+                                (setf hist (my-add-to-histogram hist
+                                                                (cons (car (car hist-element))
+                                                                      (cdr (nth rules-idx rules)))
+                                                                (cdr hist-element)))
+                                (setf hist (my-add-to-histogram hist
+                                                                (cons (cdr (nth rules-idx rules))
+                                                                      (cdr (car hist-element)))
+                                                                (cdr hist-element)))))))
+    hist
+
+    ;; convert histogram of pairs to histogram of uniques
+    (let ((hist-singles '()))
+      (-map (lambda (hist-pair-element)
+              (setf hist-singles (my-add-to-histogram hist-singles
+                                                      (car (car hist-pair-element))
+                                                      (cdr hist-pair-element)))
+              (setf hist-singles (my-add-to-histogram hist-singles
+                                                      (cdr (car hist-pair-element))
+                                                      (cdr hist-pair-element))))
+            hist)
+
+      ;; each element now has been counted twice, since each element is both at the begining of a pair and at the end of a pair.
+      ;; the only exceptions are N and B since they are used at the beginning and end, and also have to be corrected for.
+      ;; we can solve by adding a single N and B, and deviding everything by 2
+
+      (setf hist-singles (my-add-to-histogram hist-singles 'H 1))
+      (setf hist-singles (my-add-to-histogram hist-singles 'H 1))
+
+      (-map (lambda (hist-element)
+              (setf (cdr hist-element) (/ (cdr hist-element) 2)))
+            hist-singles)
+
+      (- (cdr (--max-by (> (cdr it) (cdr other)) hist-singles))
+         (cdr (--min-by (> (cdr it) (cdr other)) hist-singles)))
+      hist-singles))
+#+end_src
+
+#+RESULTS:
+: ((H . 433) (B . 6265) (N . 2088) (C . 780))
+

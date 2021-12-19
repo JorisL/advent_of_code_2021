@@ -22,7 +22,7 @@ Daily solutions are implemented in org-mode documents and executed using org-bab
 |  12 |              |             |
 |  13 | *            | *           |
 |  14 | *            |             |
-|  15 |              |             |
+|  15 | *            | *           |
 |  16 |              |             |
 |  17 |              |             |
 |  18 |              |             |
