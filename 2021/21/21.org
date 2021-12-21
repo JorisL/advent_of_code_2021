@@ -1,0 +1,43 @@
+* 21.1
+
+#+begin_src lisp :var p1-startpos=7 p2-startpos=6
+  (ql:quickload :str)
+  (ql:quickload :alexandria)
+  (ql:quickload :array-operations)
+
+  (let* ((p1 `(:pos ,p1-startpos :score 0))
+         (p2 `(:pos ,p2-startpos :score 0))
+         (dice-number 0)
+         (dice-rolls 0)
+         (current-player p1))
+
+    (flet ((get-next-dice-number (n)
+             (1+ (mod n 100)))
+           (get-next-position (pos roll)
+             (1+ (mod (1- (+ pos roll))
+                      10))))
+
+      (loop while (and (< (getf (copy-list p1) :score) 1000)
+                       (< (getf (copy-list p2) :score) 1000))
+            do (setf (getf current-player :pos)
+                     (get-next-position (getf current-player :pos)
+                                        (loop repeat 3
+                                              do (setf dice-number (get-next-dice-number dice-number))
+                                                 (incf dice-rolls)
+                                              summing dice-number into total
+                                              finally (return total))))
+               (incf (getf current-player :score)
+                     (getf current-player :pos))
+               (if (eq current-player p1)
+                   (setf current-player p2)
+                   (setf current-player p1))
+            collect (getf current-player :score))
+
+      (* (min (getf (copy-list p1) :score)
+              (getf (copy-list p2) :score))
+         dice-rolls)))
+#+end_src
+
+#+RESULTS:
+: 671580
+

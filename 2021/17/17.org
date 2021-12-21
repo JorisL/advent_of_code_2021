@@ -1,0 +1,29 @@
+* 17.1
+The X and Y coordinates are updated indipentently from each other.
+In this first assignment we only care about the Y coordinare,
+so for simplicity lets assume that at for the maximum height we can find we can also find an X veloity that is within the X target at the same sample at which the Y is in target.
+
+When only looking at Y, we can find that it follows a path with an acceleration of $-1 [\frac{position}{step}]$.
+One nice property is that, once it reaches the apex, every step down was also reached on the way up, including 0.
+
+This means that the highest velocity at which we can throw it up is the velocity for which the step just after it reached 0 on the way down is only just within the target.
+If we throw it faster up then the velocity it has on the way down when crossing 0 is too fast by which it directly skips the target on the next sample.
+
+In the case of the example, the lowest point of the target is -10.
+Therefore; we should throw it up such that, when p_y=0, v_y=-10.
+From the symetry between the Y-coordinates before and after the apex we can deduct that the velocity just before reaching 0 is the negative of the starting velocity.
+And since we know the velocity for the next step has to be -10, and is always 1 lower than the previous velocity, we can state that the starting velocity has to be -(-10-1)=9.
+
+This matches with the example.
+
+In the real assignment the lowest point of the target is -106.
+For maximum height, v_y should thererefore be 105.
+
+The total height is therefore (1+2+3+...+105), wich is the triangular number of 105.
+The formula to calculate this quickly is: $triangular(n) = \frac{1}{2} \cdot n \cdot (n+1)$
+
+Our awnser is therefore: $0.5 105 (105 + 1) => 5565.$
+
+(yay, we just solved it without any coding)
+
+* 17.2
