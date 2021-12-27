@@ -1,0 +1,189 @@
+Let's have some fun with a bit of org-babel metaprogramming.
+
+* 22.1
+** Test with small example input data
+
+#+NAME: aoc22-generate-python-script
+#+begin_src emacs-lisp :var input-file="example-input-small.txt" filter-small='t :wrap src python
+  (require 's)
+  (require 'f)
+  (require 'seq)
+  (require 'dash)
+  (require 'cl-lib)
+
+
+  (defun my-aoc22-parse-command (s)
+    "Parse a single command step from a string into an association list."
+    (when (string-match (rx (group (or "on" "off"))
+                            " x="
+                            (group (+ (or num "-")))
+                            ".."
+                            (group (+ (or num "-")))
+                            ",y="
+                            (group (+ (or num "-")))
+                            ".."
+                            (group (+ (or num "-")))
+                            ",z="
+                            (group (+ (or num "-")))
+                            ".."
+                            (group (+ (or num "-"))))
+                        s)
+      `((:command . ,(match-string 1 s))
+        (:xmin . ,(string-to-number (match-string 2 s)))
+        (:xmax . ,(string-to-number (match-string 3 s)))
+        (:ymin . ,(string-to-number (match-string 4 s)))
+        (:ymax . ,(string-to-number (match-string 5 s)))
+        (:zmin . ,(string-to-number (match-string 6 s)))
+        (:zmax . ,(string-to-number (match-string 7 s))))))
+
+
+  (defun my-aoc22-filter-commands (l)
+    "Return the (association list) commands which are within the boundries to calculate for example 1."
+    (remove nil (-map (lambda (al)
+                        (if (< (abs (alist-get :xmin al)) 50)
+                            al
+                          nil))
+                      l)))
+
+
+  (defun my-aoc22-get-py-command (al)
+    "Convert the (association list) command into a python string to perform that command."
+    (format "a[%d:%d, %d:%d, %d:%d] = %s"
+            (alist-get :xmin al)
+            (1+ (alist-get :xmax al))
+            (alist-get :ymin al)
+            (1+ (alist-get :ymax al))
+            (alist-get :zmin al)
+            (1+ (alist-get :zmax al))
+            (if (equal (alist-get :command al) "on")
+                "True"
+              "False")))
+
+
+  (defun my-aoc22-shift-coords (l)
+    "Shift all the coordinates such that we don't have negative numbers."
+    (let ((lowest-x (-min (-map (lambda (al) (alist-get :xmin al)) l)))
+          (lowest-y (-min (-map (lambda (al) (alist-get :ymin al)) l)))
+          (lowest-z (-min (-map (lambda (al) (alist-get :zmin al)) l))))
+      (-map (lambda (al)
+              (progn (decf (alist-get :xmin al) lowest-x)
+                     (decf (alist-get :xmax al) lowest-x)
+                     (decf (alist-get :ymin al) lowest-y)
+                     (decf (alist-get :ymax al) lowest-y)
+                     (decf (alist-get :zmin al) lowest-z)
+                     (decf (alist-get :zmax al) lowest-z)))
+            l)
+      l))
+
+
+
+  (let* ((input-lines (s-lines (s-trim (f-read-text input-file))))
+         (parsed-input (-map #'my-aoc22-parse-command input-lines))
+         (python-lines '(("import numpy as np"))))
+
+    (when filter-small
+      (setf parsed-input (my-aoc22-filter-commands parsed-input)))
+
+    (setf parsed-input (my-aoc22-shift-coords parsed-input))
+
+
+    (s-join "\n" (list (let ((highest-x (-max (-map (lambda (al) (alist-get :xmax al)) parsed-input)))
+                             (highest-y (-max (-map (lambda (al) (alist-get :ymax al)) parsed-input)))
+                             (highest-z (-max (-map (lambda (al) (alist-get :zmax al)) parsed-input))))
+                         (format "import numpy as np\n\na = np.zeros((%d, %d, %d), dtype=bool)\n"
+                                 (1+ highest-x)
+                                 (1+ highest-y)
+                                 (1+ highest-z)))
+                       (s-join "\n" (-map #'my-aoc22-get-py-command parsed-input))
+                       "\nreturn np.count_nonzero(a)"))
+    )
+#+end_src
+
+#+RESULTS: aoc22-generate-python-script
+#+begin_src python
+import numpy as np
+
+a = np.zeros((5, 5, 5), dtype=bool)
+
+a[1:4, 1:4, 1:4] = True
+a[2:5, 2:5, 2:5] = True
+a[0:3, 0:3, 0:3] = False
+a[1:2, 1:2, 1:2] = True
+
+return np.count_nonzero(a)
+#+end_src
+
+#+RESULTS:
+: 39
+
+** Test with large example input data
+#+CALL: aoc22-generate-python-script("example-input-large.txt", 't)
+
+#+RESULTS:
+#+begin_src python
+import numpy as np
+
+a = np.zeros((97, 92, 97), dtype=bool)
+
+a[29:76, 5:59, 3:58] = True
+a[29:83, 20:65, 24:79] = True
+a[27:78, 12:65, 12:67] = True
+a[3:57, 35:88, 0:50] = True
+a[0:51, 38:88, 26:79] = True
+a[51:97, 19:64, 27:78] = True
+a[22:73, 13:68, 29:80] = True
+a[10:55, 35:89, 47:95] = True
+a[19:71, 33:85, 37:85] = True
+a[27:76, 14:62, 21:70] = True
+a[1:18, 67:83, 3:14] = False
+a[37:85, 47:92, 0:49] = True
+a[1:18, 9:26, 35:46] = False
+a[31:76, 8:57, 43:97] = True
+a[9:28, 3:14, 73:92] = False
+a[33:85, 0:52, 3:57] = True
+a[17:27, 52:72, 36:54] = False
+a[0:45, 38:87, 21:69] = True
+a[67:80, 21:34, 47:64] = False
+a[8:59, 34:85, 17:66] = True
+
+return np.count_nonzero(a)
+#+end_src
+
+#+RESULTS:
+: 590784
+
+** Test with actual assingment input data
+#+CALL: aoc22-generate-python-script("input.txt", 't)
+
+#+RESULTS:
+#+begin_src python
+import numpy as np
+
+a = np.zeros((93, 94, 92), dtype=bool)
+
+a[18:71, 20:69, 31:86] = True
+a[28:83, 18:66, 18:70] = True
+a[41:91, 25:75, 30:78] = True
+a[40:93, 14:69, 34:81] = True
+a[35:81, 1:55, 10:55] = True
+a[0:55, 12:63, 30:82] = True
+a[17:62, 26:81, 4:58] = True
+a[30:80, 0:47, 30:77] = True
+a[39:87, 33:84, 0:55] = True
+a[34:84, 6:55, 39:92] = True
+a[73:89, 27:37, 51:67] = False
+a[16:61, 20:67, 36:89] = True
+a[36:50, 75:87, 53:67] = False
+a[14:63, 10:62, 19:72] = True
+a[57:77, 13:23, 55:65] = False
+a[30:76, 27:76, 6:56] = True
+a[66:81, 74:91, 40:59] = False
+a[33:83, 18:66, 29:82] = True
+a[60:72, 80:94, 74:90] = False
+a[12:62, 15:62, 21:66] = True
+
+return np.count_nonzero(a)
+#+end_src
+
+#+RESULTS:
+: 503864

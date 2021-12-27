@@ -27,3 +27,77 @@ Our awnser is therefore: $0.5 105 (105 + 1) => 5565.$
 (yay, we just solved it without any coding)
 
 * 17.2
+Try to brute force this assingment within the bounds of x and y velocity.
+
+From the first half of the puzzle we know the upper bound of the y velocity.
+The lower bound of the y velocity is the velocity at which the first step is at the lower y-boundry of the target area.
+
+The lower bound for the x velocity is 1 (probably higher, but this one is for certain).
+The upper bound of the x velocity is the velocity at which the first step is at the upper x-boundry of the target area.
+
+Now we only need to write a function which can check if a shot with a given xy velocity has a sample in the target area
+(which we only have to evaluate up to the point where either of the coordinates passes the boundtry),
+and to map this function over each combination of x and y velocity within the known boundries.
+
+#+name: calc-aoc17p2
+#+begin_src emacs-lisp :var target-area='(:xmin 20 :xmax 30 :ymin -10 :ymax -5)
+(require 's)
+(require 'f)
+(require 'seq)
+(require 'dash)
+(require 'cl-lib)
+
+
+(defun my-aoc17-check-valid-shot (target-area xvel yvel)
+  (let ((xpos 0)
+        (ypos 0))
+
+    (-any (lambda (_) (eq _ 't))
+          (cl-loop
+           while (and (< xpos (plist-get target-area :xmax))
+                      (> ypos (plist-get target-area :ymin)))
+           do (progn (cl-incf xpos xvel)
+                     (cl-incf ypos yvel)
+                     (cond ((> xvel 0) (cl-decf xvel))
+                           ((< xvel 0) (cl-incf xvel)))
+                     (cl-decf yvel))
+           collect (and (>= xpos (plist-get target-area :xmin))
+                        (<= xpos (plist-get target-area :xmax))
+                        (>= ypos (plist-get target-area :ymin))
+                        (<= ypos (plist-get target-area :ymax)))))
+    ))
+
+
+(let ((x-lower-bound 1)
+      (x-upper-bound (plist-get target-area :xmax))
+      (y-lower-bound (plist-get target-area :ymin))
+      (y-upper-bound (- -1 (plist-get target-area :ymin))))
+
+  (my-aoc17-check-valid-shot target-area 6 9)
+
+
+  (let ((valid-target-matrix
+         (cl-loop
+          for x from x-lower-bound to x-upper-bound
+          collect (cl-loop
+                   for y from y-lower-bound to y-upper-bound
+                   collect (if (my-aoc17-check-valid-shot target-area x y)
+                               (cons x y)
+                             nil)))))
+    valid-target-matrix
+
+    ;; remark: -flatten automatically removes nil's
+    (length (-flatten valid-target-matrix))))
+
+#+end_src
+
+#+RESULTS: calc-aoc17p2
+: 112
+
+This matches the example.
+
+Now calculate it again, but now with the data from the actual assignment
+#+call: calc-aoc17p2('(:xmin 143 :xmax 177 :ymin -106 :ymax -71))
+
+#+RESULTS:
+: 2118

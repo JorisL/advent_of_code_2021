@@ -1,0 +1,121 @@
+* 16.1
+
+#+begin_src emacs-lisp
+  (require 's)
+  (require 'f)
+  (require 'seq)
+  (require 'dash)
+  (require 'cl-lib)
+
+  (defun my-aoc16-hex-to-bin (s)
+    (s-replace-all '(("0" . "0000")
+                     ("1" . "0001")
+                     ("2" . "0010")
+                     ("3" . "0011")
+                     ("4" . "0100")
+                     ("5" . "0101")
+                     ("6" . "0110")
+                     ("7" . "0111")
+                     ("8" . "1000")
+                     ("9" . "1001")
+                     ("A" . "1010")
+                     ("B" . "1011")
+                     ("C" . "1100")
+                     ("D" . "1101")
+                     ("E" . "1110")
+                     ("F" . "1111"))
+                   s))
+
+
+  (defun my-aoc16-remove-trailing-zeros (s)
+    (if (equal (s-right 1 s) "0")
+        (my-aoc16-remove-trailing-zeros (s-chop-suffix "0" s))
+      s))
+
+
+
+
+
+
+  (defun my-aoc16-parse-literal-value (raw-data)
+    "Get number in a literal-value packet.
+     Function input is the binary data after the type id header,
+     and function outputs are the corresponding number and trailing data after the number."
+
+    (let ((raw-actual-data "")
+          (raw-rest-data raw-data))
+
+      (cl-loop while (equal (s-left 1 raw-rest-data)
+                            "1")
+               do (progn (setf raw-actual-data (s-concat raw-actual-data
+                                                         (substring raw-rest-data 1 5)))
+                         (setf raw-rest-data (substring raw-rest-data 5 nil))))
+      (setf raw-actual-data (s-concat raw-actual-data
+                                      (substring raw-rest-data 1 5)))
+      (setf raw-rest-data (substring raw-rest-data 5 nil))
+
+      (list (string-to-number raw-actual-data 2)
+            raw-rest-data)))
+
+
+  (defun my-aoc16-parse-packet (packet)
+    (let ((ver (string-to-number (substring packet 0 3) 2))
+          (type (string-to-number (substring packet 3 6) 2))
+          (rest-data (substring packet 6 nil)))
+
+
+      `((:version . ,ver)
+        (:type . ,type)
+        (:rest-data . ,rest-data))
+
+      ;; (cond ((equal type 6)
+      ;;        (progn )))
+
+      ))
+
+
+
+  (let* ((input-hex "D2FE28")
+         (input-bin (my-aoc16-remove-trailing-zeros (my-aoc16-hex-to-bin input-hex))))
+    (my-aoc16-parse-packet input-bin))
+#+end_src
+
+#+RESULTS:
+: ((:version . 6) (:type . 4) (:rest-data . 101111111000101))
+
+
+
+
+
+
+#+begin_src emacs-lisp
+  (defun my-aoc16-parse-literal-value (raw-data)
+    "Get number in a literal-value packet.
+     Function input is the binary data after the type id header,
+     and function outputs are the corresponding number and trailing data after the number."
+
+    (let ((raw-actual-data "")
+          (raw-rest-data raw-data))
+
+      (cl-loop while (equal (s-left 1 raw-rest-data)
+                            "1")
+               do (progn (setf raw-actual-data (s-concat raw-actual-data
+                                                         (substring raw-rest-data 1 5)))
+                         (setf raw-rest-data (substring raw-rest-data 5 nil))))
+      (setf raw-actual-data (s-concat raw-actual-data
+                                      (substring raw-rest-data 1 5)))
+      (setf raw-rest-data (substring raw-rest-data 5 nil))
+
+      (list (string-to-number raw-actual-data 2)
+            raw-rest-data)))
+
+  (my-aoc16-parse-literal-value "101111111000101")
+#+end_src
+
+#+RESULTS:
+| 2021 |   |
+
+
+#+begin_src emacs-lisp
+  (defun my-aoc16-parse-operator-packet (raw-data))
+#+end_src
